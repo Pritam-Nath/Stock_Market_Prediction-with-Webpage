@@ -1,7 +1,7 @@
-onnxruntime
+tensorflow==2.15.0
+streamlit
 yfinance
-numpy
 pandas
+numpy
 matplotlib
 scikit-learn
-streamlit
