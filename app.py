@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from keras.models import load_model
+from tensorflow.keras.models import load_model
 import matplotlib.pyplot as plt
 import yfinance as yf
 
@@ -104,4 +104,5 @@ st.subheader('Original Close Price vs Predicted Close price')
 fig = plt.figure(figsize=(15,6))
 plt.plot(pd.concat([google_data.Close[:splitting_len+100],ploting_data], axis=0))
 plt.legend(["Data- not used", "Original Test data", "Predicted Test data"])
+
 st.pyplot(fig)
