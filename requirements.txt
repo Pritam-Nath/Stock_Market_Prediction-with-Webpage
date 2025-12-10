@@ -1,8 +1,7 @@
-tensorflow==2.15.0
-streamlit
-pandas
-numpy
-matplotlib
+onnxruntime
 yfinance
+numpy
+pandas
+matplotlib
 scikit-learn
-keras
+streamlit
