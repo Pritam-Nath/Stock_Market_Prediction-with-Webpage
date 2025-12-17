@@ -1,69 +1,107 @@
-from flask import Flask, render_template, request
+import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib
-matplotlib.use("Agg")  # required for server
+from keras.models import load_model
 import matplotlib.pyplot as plt
 import yfinance as yf
-from keras.models import load_model
-from sklearn.preprocessing import MinMaxScaler
+
+st.title("Stock Price Predictor App")
+import base64
+
+def get_base64(file_path):
+    with open(file_path, "rb") as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+img_base64 = get_base64("s2.jpg")
+
+st.markdown(
+    f"""
+    <style>
+    .stApp {{
+        background-image: url("data:image/jpg;base64,{img_base64}");
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+
+
+stock = st.text_input("Enter the Stock ID", "GOOG")
+
 from datetime import datetime
-import os
+end = datetime.now()
+start = datetime(end.year-20,end.month,end.day)
 
-app = Flask(__name__)
+google_data = yf.download(stock, start, end)
 
-# Load model once (important for performance)
 model = load_model("Latest_stock_price_model.keras")
+st.subheader("Stock Data")
+st.write(google_data)
 
-@app.route("/", methods=["GET", "POST"])
-def index():
-    stock = "GOOG"
-    plot_path = None
-
-    if request.method == "POST":
-        stock = request.form.get("stock")
-
-        end = datetime.now()
-        start = datetime(end.year - 20, end.month, end.day)
-        google_data = yf.download(stock, start, end)
-
-        splitting_len = int(len(google_data) * 0.7)
-        x_test = pd.DataFrame(google_data['Close'][splitting_len:])
-        x_test.columns = ['Close']
-
-        scaler = MinMaxScaler(feature_range=(0, 1))
-        scaled_data = scaler.fit_transform(x_test[['Close']])
-
-        x_data, y_data = [], []
-        for i in range(100, len(scaled_data)):
-            x_data.append(scaled_data[i - 100:i])
-            y_data.append(scaled_data[i])
-
-        x_data, y_data = np.array(x_data), np.array(y_data)
-
-        predictions = model.predict(x_data)
-        inv_pre = scaler.inverse_transform(predictions)
-        inv_y_test = scaler.inverse_transform(y_data)
-
-        ploting_data = pd.DataFrame({
-            'original': inv_y_test.reshape(-1),
-            'predicted': inv_pre.reshape(-1)
-        }, index=google_data.index[splitting_len + 100:])
-
-        # Create plot
-        if not os.path.exists("static"):
-            os.makedirs("static")
-
-        plot_path = "static/plot.png"
-        plt.figure(figsize=(15, 6))
-        plt.plot(pd.concat([google_data.Close[:splitting_len + 100], ploting_data], axis=0))
-        plt.legend(["Data-Not Used", "Original Test Data", "Predicted Data"])
-        plt.tight_layout()
-        plt.savefig(plot_path)
-        plt.close()
-
-    return render_template("index.html", stock=stock, plot_path=plot_path)
+splitting_len = int(len(google_data)*0.7)
+x_test = pd.DataFrame(google_data['Close'][splitting_len:])
+x_test.columns = ['Close']
 
 
-if __name__ == "__main__":
-    app.run()
+def plot_graph(figsize, values, full_data, extra_data = 0, extra_dataset = None):
+    fig = plt.figure(figsize=figsize)
+    plt.plot(values,'Orange')
+    plt.plot(full_data.Close, 'b')
+    if extra_data:
+        plt.plot(extra_dataset)
+    return fig
+
+st.subheader('Original Close Price and MA for 250 days')
+google_data['MA_for_250_days'] = google_data.Close.rolling(250).mean()
+st.pyplot(plot_graph((15,6), google_data['MA_for_250_days'],google_data,0))
+
+st.subheader('Original Close Price and MA for 200 days')
+google_data['MA_for_200_days'] = google_data.Close.rolling(200).mean()
+st.pyplot(plot_graph((15,6), google_data['MA_for_200_days'],google_data,0))
+
+st.subheader('Original Close Price and MA for 100 days')
+google_data['MA_for_100_days'] = google_data.Close.rolling(100).mean()
+st.pyplot(plot_graph((15,6), google_data['MA_for_100_days'],google_data,0))
+
+st.subheader('Original Close Price and MA for 100 days and MA for 250 days')
+st.pyplot(plot_graph((15,6), google_data['MA_for_100_days'],google_data,1,google_data['MA_for_250_days']))
+
+from sklearn.preprocessing import MinMaxScaler
+
+scaler = MinMaxScaler(feature_range=(0,1))
+scaled_data = scaler.fit_transform(x_test[['Close']])
+
+x_data = []
+y_data = []
+
+for i in range(100,len(scaled_data)):
+    x_data.append(scaled_data[i-100:i])
+    y_data.append(scaled_data[i])
+
+x_data, y_data = np.array(x_data), np.array(y_data)
+
+predictions = model.predict(x_data)
+
+inv_pre = scaler.inverse_transform(predictions)
+inv_y_test = scaler.inverse_transform(y_data)
+
+ploting_data = pd.DataFrame(
+ {
+  'original_test_data': inv_y_test.reshape(-1),
+    'predictions': inv_pre.reshape(-1)
+ } ,
+    index = google_data.index[splitting_len+100:]
+)
+st.subheader("Original values vs Predicted values")
+st.write(ploting_data)
+
+st.subheader('Original Close Price vs Predicted Close price')
+fig = plt.figure(figsize=(15,6))
+plt.plot(pd.concat([google_data.Close[:splitting_len+100],ploting_data], axis=0))
+plt.legend(["Data- not used", "Original Test data", "Predicted Test data"])
+st.pyplot(fig)
