@@ -1,11 +1,8 @@
-flask
-tensorflow
-keras
-numpy
+streamlit
 pandas
-yfinance
+numpy
 matplotlib
+yfinance
 scikit-learn
-gunicorn
-
-
+keras
+tensorflow
