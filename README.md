@@ -34,18 +34,16 @@ Users can select a stock symbol, view historical trends, and see predicted futur
 
 ---
 
-🗂 Repository Contents
+## 🗂 Repository Contents
 
-File / Folder	Description
-
-app.py	Main Streamlit web application
-requirements.txt	Required Python libraries
-model.pkl	Trained machine learning prediction model
-scaler.pkl	Data scaler used for normalization
-.ipynb	Model training & experimentation notebook
-assets / images	UI images or screenshots (if included)
-
-
+| File                            | Description                          |
+| ------------------------------- | ------------------------------------ |
+| `app.py`                        | Main Streamlit app code              |
+| `requirements.txt`              | Python dependencies                  |
+| `stock_price.ipynb`             | Notebook used to build/train model   |
+| `Latest_stock_price_model.keras`| Pre-trained machine learning model   |
+| `stock_price`                   | Scaler for feature normalization     |
+| `s2.jpg`                        | Example UI screenshot or image asset |
 
 ---
 
@@ -149,4 +147,5 @@ Developed by Pritam Nath
 
 
 ---
+
 
